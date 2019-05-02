@@ -8,7 +8,7 @@ endif
 
 CC	= g++
 RM	= rm
-CFLAGS	= $(PCFLAGS)
+CFLAGS	= $(PCFLAGS) -std=c++11
 SRCS	= main.cpp \
 	  RtMidi.cpp
 OBJS	= $(SRCS:%.cpp=%.o) 
