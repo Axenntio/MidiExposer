@@ -23,27 +23,27 @@ public:
 	Note(unsigned char l_id) : m_id(l_id), m_size(1), m_moved(0)
 	{
 	}
-	
+
 	unsigned char getId() const
 	{
 		return this->m_id;
 	}
-	
+
 	void sizeUp()
 	{
 		this->m_size += SPEED;
 	}
-	
+
 	unsigned short getSize() const
 	{
 		return this->m_size;
 	}
-	
+
 	void moveUp()
 	{
 		this->m_moved += SPEED;
 	}
-	
+
 	unsigned short getMove() const
 	{
 		return this->m_moved;
@@ -59,7 +59,7 @@ std::vector<Note> notes;
 void midiCallback(double deltatime, std::vector<unsigned char> *message, void *userData)
 {
   //unsigned int nBytes = message->size();
-	
+
 	if (message->at(0) == 144) {
 		key[message->at(1) - START_NOTE] = true;
 		notes.push_back(Note(message->at(1) - START_NOTE));
@@ -98,13 +98,25 @@ int main()
       while (window.pollEvent(event)) {
           if (event.type == sf::Event::Closed)
               window.close();
-						else if (event.type == sf::Event::KeyPressed) {
-							if (event.key.code == sf::Keyboard::Q) {
+					else if (event.type == sf::Event::KeyPressed) {
+						switch (event.key.code) {
+							case sf::Keyboard::Q:
 								key[40] = true;
-							}
-							if (event.key.code == sf::Keyboard::W)
+								notes.push_back(Note(40));
+								break;
+							default:
+								break;
+						}
+					}
+					else if (event.type == sf::Event::KeyReleased) {
+						switch (event.key.code) {
+							case sf::Keyboard::Q:
 								key[40] = false;
-            }
+								break;
+							default:
+								break;
+						}
+					}
       }
 			for (unsigned char i = 0; i < NOTES_NB; i++) {
 				if (key[i]) {
@@ -125,7 +137,7 @@ int main()
 			}
 			window.clear(sf::Color::Black);
 			rectangle.setSize(sf::Vector2f(NOTES_WIDTH, NOTE_HEIGHT));
-			
+
 			for (unsigned char i = 0; i < NOTES_NB; i++) {
 				rectangle.setPosition(i * (NOTES_WIDTH + NOTES_SEP), HEIGHT - NOTE_HEIGHT);
 				rectangle.setFillColor(sf::Color(255, 0, 0, key_display[i]));
