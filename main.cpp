@@ -3,10 +3,11 @@
 #include <cstdlib>
 #include "RtMidi.h"
 
-#define HEIGHT 1600
+#define HEIGHT 800
 
 #define SPEED 5
 
+#define SHOW_KEYBOARD true
 #define KEYBOARD_KEY 57
 
 #define START_NOTE 21
@@ -15,7 +16,7 @@
 #define NOTE_DISAPPEAR 30
 
 #define NOTES_WIDTH 32
-#define NOTE_HEIGHT 120
+#define NOTE_HEIGHT (10 + 90 * SHOW_KEYBOARD)
 #define NOTES_SEP 1
 
 bool key[NOTES_NB];
@@ -303,11 +304,12 @@ int main()
 					it = notes.erase(it);
 			}
 			window.clear(sf::Color::Black);
-			keyboard.Draw(window);
+			if (SHOW_KEYBOARD)
+				keyboard.Draw(window);
 			for (unsigned char i = 0; i < NOTES_NB; i++) {
 				sf::IntRect rect = keyboard.GetKey(i).GetRect();
 				rectangle.setPosition(rect.left, HEIGHT - NOTE_HEIGHT);
-				rectangle.setSize(sf::Vector2f(rect.width, rect.height));
+				rectangle.setSize(sf::Vector2f(rect.width, (SHOW_KEYBOARD) ? rect.height : NOTE_HEIGHT));
 				rectangle.setFillColor(sf::Color(255 - float(i) / NOTES_NB * 255, 0, float(i) / NOTES_NB * 255, key_display[i]));
 				window.draw(rectangle);
 			}
