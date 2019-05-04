@@ -5,7 +5,7 @@
 
 #define HEIGHT 800
 
-#define SPEED 5
+#define SPEED 2
 
 #define SHOW_KEYBOARD true
 #define KEYBOARD_KEY 57
@@ -13,6 +13,7 @@
 #define START_NOTE 21
 #define NOTES_NB 88
 
+#define STRENGHT_SENSIBILITY false
 #define NOTE_DISAPPEAR 30
 
 #define NOTES_WIDTH 32
@@ -321,7 +322,7 @@ int main()
 				rectangle.setSize(sf::Vector2f(rect.width + NOTES_SEP * 2, note.GetSize() + NOTES_SEP * 2));
 				window.draw(rectangle);
 				
-				rectangle.setFillColor(sf::Color(255 - float(note.GetId()) / NOTES_NB * 255, 0, float(note.GetId()) / NOTES_NB * 255, note.GetStrength()));
+				rectangle.setFillColor(sf::Color(255 - float(note.GetId()) / NOTES_NB * 255, 0, float(note.GetId()) / NOTES_NB * 255, (STRENGHT_SENSIBILITY) ? note.GetStrength() : 255));
 				rectangle.setPosition(rect.left, HEIGHT - NOTE_HEIGHT - note.GetMove() - note.GetSize());
 				rectangle.setSize(sf::Vector2f(rect.width, note.GetSize()));
 				if (note.GetMove())
