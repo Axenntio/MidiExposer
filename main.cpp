@@ -5,7 +5,9 @@
 
 #define HEIGHT 1600
 
-#define SPEED 3
+#define SPEED 5
+
+#define KEYBOARD_KEY 57
 
 #define START_NOTE 21
 #define NOTES_NB 88
@@ -17,6 +19,66 @@
 #define NOTES_SEP 2
 
 bool key[NOTES_NB];
+
+sf::Keyboard::Key keyboard[KEYBOARD_KEY] = {
+	sf::Keyboard::Hyphen,
+	sf::Keyboard::Num1,
+	sf::Keyboard::Num2,
+	sf::Keyboard::Num3,
+	sf::Keyboard::Num4,
+	sf::Keyboard::Num5,
+	sf::Keyboard::Num6,
+	sf::Keyboard::Num7,
+	sf::Keyboard::Num8,
+	sf::Keyboard::Num9,
+	sf::Keyboard::Num0,
+	sf::Keyboard::Equal,
+	sf::Keyboard::Backspace,
+	sf::Keyboard::Tab,
+	sf::Keyboard::Q,
+	sf::Keyboard::W,
+	sf::Keyboard::E,
+	sf::Keyboard::R,
+	sf::Keyboard::T,
+	sf::Keyboard::Y,
+	sf::Keyboard::U,
+	sf::Keyboard::I,
+	sf::Keyboard::O,
+	sf::Keyboard::P,
+	sf::Keyboard::LBracket,
+	sf::Keyboard::RBracket,
+	sf::Keyboard::Backslash,
+	sf::Keyboard::A,
+	sf::Keyboard::S,
+	sf::Keyboard::D,
+	sf::Keyboard::F,
+	sf::Keyboard::G,
+	sf::Keyboard::H,
+	sf::Keyboard::J,
+	sf::Keyboard::K,
+	sf::Keyboard::L,
+	sf::Keyboard::Semicolon,
+	sf::Keyboard::Quote,
+	sf::Keyboard::Return,
+	sf::Keyboard::LShift,
+	sf::Keyboard::Z,
+	sf::Keyboard::X,
+	sf::Keyboard::C,
+	sf::Keyboard::V,
+	sf::Keyboard::B,
+	sf::Keyboard::N,
+	sf::Keyboard::M,
+	sf::Keyboard::Comma,
+	sf::Keyboard::Period,
+	sf::Keyboard::Slash,
+	sf::Keyboard::RShift,
+	sf::Keyboard::LControl,
+	sf::Keyboard::LAlt,
+	sf::Keyboard::LSystem,
+	sf::Keyboard::Space,
+	sf::Keyboard::RSystem,
+	sf::Keyboard::RAlt
+};
 
 class Note {
 public:
@@ -87,7 +149,7 @@ int main()
   	midi->ignoreTypes(false, false, false);
 	}
 	else
-		std::cout << "No ports available!\n";
+		std::cout << "No ports available!" << std::endl;
 	for (unsigned char i = 0; i < NOTES_NB; i++) {
 		key[i] = false;
 		key_display[i] = 0;
@@ -99,22 +161,19 @@ int main()
           if (event.type == sf::Event::Closed)
               window.close();
 					else if (event.type == sf::Event::KeyPressed) {
-						switch (event.key.code) {
-							case sf::Keyboard::Q:
-								key[40] = true;
-								notes.push_back(Note(40));
-								break;
-							default:
-								break;
+						for (unsigned short i = 0; i < KEYBOARD_KEY; i ++) {
+							if (event.key.code == keyboard[i]) {
+								if (key[i] != true) {
+									key[i] = true;
+									notes.push_back(Note(i));
+								}
+							}
 						}
 					}
 					else if (event.type == sf::Event::KeyReleased) {
-						switch (event.key.code) {
-							case sf::Keyboard::Q:
-								key[40] = false;
-								break;
-							default:
-								break;
+						for (unsigned short i = 0; i < KEYBOARD_KEY; i ++) {
+							if (event.key.code == keyboard[i])
+								key[i] = false;
 						}
 					}
       }
@@ -134,6 +193,10 @@ int main()
 					if (key_display[i])
 						key_display[i] -= (key_display[i] < NOTE_DISAPPEAR) ? key_display[i] : NOTE_DISAPPEAR;
 				}
+			}
+			for (auto it = notes.begin(); it < notes.end(); it++) {
+				if (it->getMove() > HEIGHT - NOTE_HEIGHT)
+					it = notes.erase(it);
 			}
 			window.clear(sf::Color::Black);
 			rectangle.setSize(sf::Vector2f(NOTES_WIDTH, NOTE_HEIGHT));
