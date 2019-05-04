@@ -15,12 +15,12 @@
 #define NOTE_DISAPPEAR 30
 
 #define NOTES_WIDTH 32
-#define NOTE_HEIGHT 10
+#define NOTE_HEIGHT 120
 #define NOTES_SEP 1
 
 bool key[NOTES_NB];
 
-sf::Keyboard::Key keyboard[KEYBOARD_KEY] = {
+sf::Keyboard::Key keyboard_key[KEYBOARD_KEY] = {
 	sf::Keyboard::Hyphen,
 	sf::Keyboard::Num1,
 	sf::Keyboard::Num2,
@@ -80,38 +80,131 @@ sf::Keyboard::Key keyboard[KEYBOARD_KEY] = {
 	sf::Keyboard::RAlt
 };
 
+class Key {
+public:
+	Key()
+	{
+	}
+	
+	Key(unsigned short l_id, sf::IntRect l_rect) : m_id(l_id), m_rect(l_rect)
+	{
+	}
+	
+	sf::IntRect GetRect() const
+	{
+		return this->m_rect;
+	}
+	
+	void Draw(sf::RenderWindow &window, bool black_key) const
+	{
+		sf::RectangleShape rectangle;
+		
+		rectangle.setSize(sf::Vector2f(this->m_rect.width, this->m_rect.height));
+		rectangle.setPosition(this->m_rect.left, this->m_rect.top);
+		if (this->m_rect.height != NOTE_HEIGHT) {
+			rectangle.setFillColor(sf::Color(0, 0, 0, 255));
+			if (black_key)
+				window.draw(rectangle);
+		}
+		else {
+			rectangle.setFillColor(sf::Color(255, 255, 255, 255));
+			if (!black_key)
+				window.draw(rectangle);
+		}
+	}
+	
+private:
+	unsigned short m_id;
+	sf::IntRect m_rect;
+};
+
+class Keyboard {
+public:
+	Keyboard(unsigned short l_size) : m_size(l_size)
+	{
+		unsigned short index = 0;
+		unsigned char left;
+		unsigned char height;
+		unsigned char width;
+		
+		for (unsigned char i = 0; i < this->m_size; i++) {
+			height = NOTE_HEIGHT;
+			width = NOTES_WIDTH;
+			left = 0;
+			if (i % 12 == 1 || i % 12 == 4 || i % 12 == 6 || i % 12 == 9 || i % 12 == 11) {
+				height -= NOTE_HEIGHT / 3;
+				width -= NOTES_WIDTH / 2;
+				left = NOTES_WIDTH / 4;
+			}
+			this->m_keys.push_back(Key(i, sf::IntRect(index * (NOTES_WIDTH + NOTES_SEP) - left, HEIGHT - NOTE_HEIGHT, width, height)));
+			if (!(i % 12 == 1 || i % 12 == 4 || i % 12 == 6 || i % 12 == 9 || i % 12 == 11))
+				index++;
+		}
+		this->m_window_width = index * (NOTES_WIDTH + NOTES_SEP);
+	}
+	
+	Key GetKey(unsigned short l_id) const
+	{
+		return this->m_keys[l_id];
+	}
+	
+	unsigned short GetSize() const
+	{
+		return this->m_size;
+	}
+	
+	unsigned short GetWindowWidth() const
+	{
+		return this->m_window_width;
+	}
+	
+	void Draw(sf::RenderWindow &window) const
+	{
+		for (unsigned char i = 0; i < this->m_size; i++) {
+			this->m_keys[i].Draw(window, false);
+		}
+		for (unsigned char i = 0; i < this->m_size; i++) {
+			this->m_keys[i].Draw(window, true);
+		}
+	}
+private:
+	unsigned short m_window_width;
+	unsigned short m_size;
+	std::vector<Key> m_keys;
+};
+
 class Note {
 public:
 	Note(unsigned char l_id, unsigned char l_strength) : m_id(l_id), m_strength(l_strength), m_size(1), m_moved(0)
 	{
 	}
 
-	unsigned char getId() const
+	unsigned char GetId() const
 	{
 		return this->m_id;
 	}
 	
-	unsigned char getStrength() const
+	unsigned char GetStrength() const
 	{
 		return this->m_strength;
 	}
 
-	void sizeUp()
+	void SizeUp()
 	{
 		this->m_size += SPEED;
 	}
 
-	unsigned short getSize() const
+	unsigned short GetSize() const
 	{
 		return this->m_size;
 	}
 
-	void moveUp()
+	void MoveUp()
 	{
 		this->m_moved += SPEED;
 	}
 
-	unsigned short getMove() const
+	unsigned short GetMove() const
 	{
 		return this->m_moved;
 	}
@@ -126,23 +219,27 @@ std::vector<Note> notes;
 
 void midiCallback(double deltatime, std::vector<unsigned char> *message, void *userData)
 {
-  //unsigned int nBytes = message->size();
-
 	if (message->at(0) == 144) {
 		key[message->at(1) - START_NOTE] = true;
 		notes.push_back(Note(message->at(1) - START_NOTE, float(message->at(2)) / 100 * 255));
 	}
-	if (message->at(0) == 128)
+	else if (message->at(0) == 128) {
 		key[message->at(1) - START_NOTE] = false;
-  /*for (unsigned int i=0; i < nBytes; i++)
-    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", " << std::endl;//*/
-  /*if (nBytes > 0)
-    std::cout << "stamp = " << deltatime << std::endl;//*/
+	}
+	else {
+		unsigned int nBytes = message->size();
+		std::cout << "Unknow action: ";
+		for (unsigned int i = 0; i < nBytes; i++)
+	    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+	  if (nBytes > 0)
+	    std::cout << "stamp = " << deltatime << std::endl;//*/
+	}
 }
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(NOTES_NB * (NOTES_WIDTH + NOTES_SEP), HEIGHT), "Midi Exposer");
+	Keyboard keyboard(NOTES_NB);
+	sf::RenderWindow window(sf::VideoMode(keyboard.GetWindowWidth(), HEIGHT), "Midi Exposer");
 	sf::Event event;
 	sf::RectangleShape rectangle;
   RtMidiIn *midi = new RtMidiIn();
@@ -169,7 +266,7 @@ int main()
               window.close();
 					else if (event.type == sf::Event::KeyPressed) {
 						for (unsigned short i = 0; i < KEYBOARD_KEY; i ++) {
-							if (event.key.code == keyboard[i]) {
+							if (event.key.code == keyboard_key[i]) {
 								if (key[i] != true) {
 									key[i] = true;
 									notes.push_back(Note(i, 255));
@@ -179,7 +276,7 @@ int main()
 					}
 					else if (event.type == sf::Event::KeyReleased) {
 						for (unsigned short i = 0; i < KEYBOARD_KEY; i ++) {
-							if (event.key.code == keyboard[i])
+							if (event.key.code == keyboard_key[i])
 								key[i] = false;
 						}
 					}
@@ -188,37 +285,45 @@ int main()
 				if (key[i]) {
 					key_display[i] = 255;
 					for (auto &note : notes) {
-						if (i == note.getId() && !note.getMove())
-							note.sizeUp();
+						if (i == note.GetId() && !note.GetMove())
+							note.SizeUp();
 					}
 				}
 				else {
 					for (auto &note : notes) {
-						if (i == note.getId() && !note.getMove())
-							note.moveUp();
+						if (i == note.GetId() && !note.GetMove())
+							note.MoveUp();
 					}
 					if (key_display[i])
 						key_display[i] -= (key_display[i] < NOTE_DISAPPEAR) ? key_display[i] : NOTE_DISAPPEAR;
 				}
 			}
 			for (auto it = notes.begin(); it < notes.end(); it++) {
-				if (it->getMove() > HEIGHT - NOTE_HEIGHT)
+				if (it->GetMove() > HEIGHT - NOTE_HEIGHT)
 					it = notes.erase(it);
 			}
 			window.clear(sf::Color::Black);
-			rectangle.setSize(sf::Vector2f(NOTES_WIDTH, NOTE_HEIGHT));
-
+			keyboard.Draw(window);
 			for (unsigned char i = 0; i < NOTES_NB; i++) {
-				rectangle.setPosition(i * (NOTES_WIDTH + NOTES_SEP), HEIGHT - NOTE_HEIGHT);
+				sf::IntRect rect = keyboard.GetKey(i).GetRect();
+				rectangle.setPosition(rect.left, HEIGHT - NOTE_HEIGHT);
+				rectangle.setSize(sf::Vector2f(rect.width, rect.height));
 				rectangle.setFillColor(sf::Color(255 - float(i) / NOTES_NB * 255, 0, float(i) / NOTES_NB * 255, key_display[i]));
 				window.draw(rectangle);
 			}
 			for (auto &note : notes) {
-				rectangle.setFillColor(sf::Color(255 - float(note.getId()) / NOTES_NB * 255, 0, float(note.getId()) / NOTES_NB * 255, note.getStrength()));
-				rectangle.setPosition(note.getId() * (NOTES_WIDTH + NOTES_SEP), HEIGHT - NOTE_HEIGHT - note.getMove() - note.getSize());
-				rectangle.setSize(sf::Vector2f(NOTES_WIDTH, note.getSize()));
-				if (note.getMove())
-					note.moveUp();
+				sf::IntRect rect = keyboard.GetKey(note.GetId()).GetRect();
+				
+				rectangle.setFillColor(sf::Color(0, 0, 0));
+				rectangle.setPosition(rect.left - NOTES_SEP, HEIGHT - NOTE_HEIGHT - note.GetMove() - note.GetSize() - NOTES_SEP);
+				rectangle.setSize(sf::Vector2f(rect.width + NOTES_SEP * 2, note.GetSize() + NOTES_SEP * 2));
+				window.draw(rectangle);
+				
+				rectangle.setFillColor(sf::Color(255 - float(note.GetId()) / NOTES_NB * 255, 0, float(note.GetId()) / NOTES_NB * 255, note.GetStrength()));
+				rectangle.setPosition(rect.left, HEIGHT - NOTE_HEIGHT - note.GetMove() - note.GetSize());
+				rectangle.setSize(sf::Vector2f(rect.width, note.GetSize()));
+				if (note.GetMove())
+					note.MoveUp();
 				window.draw(rectangle);
 			}
       window.display();
