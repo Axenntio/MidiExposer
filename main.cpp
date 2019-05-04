@@ -16,7 +16,7 @@
 
 #define NOTES_WIDTH 32
 #define NOTE_HEIGHT 10
-#define NOTES_SEP 2
+#define NOTES_SEP 1
 
 bool key[NOTES_NB];
 
@@ -82,13 +82,18 @@ sf::Keyboard::Key keyboard[KEYBOARD_KEY] = {
 
 class Note {
 public:
-	Note(unsigned char l_id) : m_id(l_id), m_size(1), m_moved(0)
+	Note(unsigned char l_id, unsigned char l_strength) : m_id(l_id), m_strength(l_strength), m_size(1), m_moved(0)
 	{
 	}
 
 	unsigned char getId() const
 	{
 		return this->m_id;
+	}
+	
+	unsigned char getStrength() const
+	{
+		return this->m_strength;
 	}
 
 	void sizeUp()
@@ -112,6 +117,7 @@ public:
 	}
 private:
 	unsigned char m_id;
+	unsigned char m_strength;
 	unsigned short m_size;
 	unsigned short m_moved;
 };
@@ -124,13 +130,13 @@ void midiCallback(double deltatime, std::vector<unsigned char> *message, void *u
 
 	if (message->at(0) == 144) {
 		key[message->at(1) - START_NOTE] = true;
-		notes.push_back(Note(message->at(1) - START_NOTE));
+		notes.push_back(Note(message->at(1) - START_NOTE, float(message->at(2)) / 100 * 255));
 	}
 	if (message->at(0) == 128)
 		key[message->at(1) - START_NOTE] = false;
   /*for (unsigned int i=0; i < nBytes; i++)
-    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-  if (nBytes > 0)
+    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", " << std::endl;//*/
+  /*if (nBytes > 0)
     std::cout << "stamp = " << deltatime << std::endl;//*/
 }
 
@@ -166,7 +172,7 @@ int main()
 							if (event.key.code == keyboard[i]) {
 								if (key[i] != true) {
 									key[i] = true;
-									notes.push_back(Note(i));
+									notes.push_back(Note(i, 255));
 								}
 							}
 						}
@@ -204,11 +210,11 @@ int main()
 
 			for (unsigned char i = 0; i < NOTES_NB; i++) {
 				rectangle.setPosition(i * (NOTES_WIDTH + NOTES_SEP), HEIGHT - NOTE_HEIGHT);
-				rectangle.setFillColor(sf::Color(255, 0, 0, key_display[i]));
+				rectangle.setFillColor(sf::Color(255 - float(i) / NOTES_NB * 255, 0, float(i) / NOTES_NB * 255, key_display[i]));
 				window.draw(rectangle);
 			}
-			rectangle.setFillColor(sf::Color(255, 0, 0, 255));
 			for (auto &note : notes) {
+				rectangle.setFillColor(sf::Color(255 - float(note.getId()) / NOTES_NB * 255, 0, float(note.getId()) / NOTES_NB * 255, note.getStrength()));
 				rectangle.setPosition(note.getId() * (NOTES_WIDTH + NOTES_SEP), HEIGHT - NOTE_HEIGHT - note.getMove() - note.getSize());
 				rectangle.setSize(sf::Vector2f(NOTES_WIDTH, note.getSize()));
 				if (note.getMove())
