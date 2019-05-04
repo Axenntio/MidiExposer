@@ -144,6 +144,7 @@ int main()
 	unsigned char key_display[NOTES_NB];
 
   if (nPorts != 0) {
+		std::cout << nPorts << " ports available!" << std::endl;
   	midi->openPort(0);
   	midi->setCallback(&midiCallback);
   	midi->ignoreTypes(false, false, false);
