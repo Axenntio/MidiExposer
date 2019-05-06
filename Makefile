@@ -18,13 +18,16 @@ CC	= g++
 RM	= rm
 CFLAGS	= $(PCFLAGS) -std=c++11
 SRCS	= main.cpp \
-	  RtMidi.cpp
-OBJS	= $(SRCS:%.cpp=%.o) 
+				Keyboard.cpp \
+				Key.cpp \
+				Note.cpp \
+				RtMidi.cpp
+OBJS	= $(SRCS:%.cpp=%.o)
 NAME	= MidiExposer
 
 all	:	$(NAME)
 
-$(NAME)	:	$(OBJS) 
+$(NAME)	:	$(OBJS)
 		$(CC) $(OBJS) -o $(NAME) $(LDFLAGS)
 
 .cpp.o:

@@ -1,25 +1,12 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cstdlib>
+#include "defines.hpp"
+#include "Keyboard.hpp"
+#include "Note.hpp"
 #include "RtMidi.h"
 
-#define HEIGHT 800
-
-#define SPEED 2
-
-#define SHOW_KEYBOARD true
-#define KEYBOARD_KEY 57
-
-#define START_NOTE 21
-#define NOTES_NB 88
-
-#define STRENGHT_SENSIBILITY false
-#define NOTE_DISAPPEAR 30
-
-#define NOTES_WIDTH 32
-#define NOTE_HEIGHT (10 + 90 * SHOW_KEYBOARD)
-#define NOTES_SEP 1
-
+std::vector<Note> notes;
 bool key[NOTES_NB];
 
 sf::Keyboard::Key keyboard_key[KEYBOARD_KEY] = {
@@ -82,148 +69,11 @@ sf::Keyboard::Key keyboard_key[KEYBOARD_KEY] = {
 	sf::Keyboard::RAlt
 };
 
-class Key {
-public:
-	Key()
-	{
-	}
-	
-	Key(unsigned short l_id, sf::IntRect l_rect) : m_id(l_id), m_rect(l_rect)
-	{
-	}
-	
-	sf::IntRect GetRect() const
-	{
-		return this->m_rect;
-	}
-	
-	void Draw(sf::RenderWindow &window, bool black_key) const
-	{
-		sf::RectangleShape rectangle;
-		
-		rectangle.setSize(sf::Vector2f(this->m_rect.width, this->m_rect.height));
-		rectangle.setPosition(this->m_rect.left, this->m_rect.top);
-		if (this->m_rect.height != NOTE_HEIGHT) {
-			rectangle.setFillColor(sf::Color(0, 0, 0, 255));
-			if (black_key)
-				window.draw(rectangle);
-		}
-		else {
-			rectangle.setFillColor(sf::Color(255, 255, 255, 255));
-			if (!black_key)
-				window.draw(rectangle);
-		}
-	}
-	
-private:
-	unsigned short m_id;
-	sf::IntRect m_rect;
-};
-
-class Keyboard {
-public:
-	Keyboard(unsigned short l_size) : m_size(l_size)
-	{
-		unsigned short index = 0;
-		unsigned char left;
-		unsigned char height;
-		unsigned char width;
-		
-		for (unsigned char i = 0; i < this->m_size; i++) {
-			height = NOTE_HEIGHT;
-			width = NOTES_WIDTH;
-			left = 0;
-			if (i % 12 == 1 || i % 12 == 4 || i % 12 == 6 || i % 12 == 9 || i % 12 == 11) {
-				height -= NOTE_HEIGHT / 3;
-				width -= NOTES_WIDTH / 2;
-				left = NOTES_WIDTH / 4;
-			}
-			this->m_keys.push_back(Key(i, sf::IntRect(index * (NOTES_WIDTH + NOTES_SEP) - left, HEIGHT - NOTE_HEIGHT, width, height)));
-			if (!(i % 12 == 1 || i % 12 == 4 || i % 12 == 6 || i % 12 == 9 || i % 12 == 11))
-				index++;
-		}
-		this->m_window_width = index * (NOTES_WIDTH + NOTES_SEP);
-	}
-	
-	Key GetKey(unsigned short l_id) const
-	{
-		return this->m_keys[l_id];
-	}
-	
-	unsigned short GetSize() const
-	{
-		return this->m_size;
-	}
-	
-	unsigned short GetWindowWidth() const
-	{
-		return this->m_window_width;
-	}
-	
-	void Draw(sf::RenderWindow &window) const
-	{
-		for (unsigned char i = 0; i < this->m_size; i++) {
-			this->m_keys[i].Draw(window, false);
-		}
-		for (unsigned char i = 0; i < this->m_size; i++) {
-			this->m_keys[i].Draw(window, true);
-		}
-	}
-private:
-	unsigned short m_window_width;
-	unsigned short m_size;
-	std::vector<Key> m_keys;
-};
-
-class Note {
-public:
-	Note(unsigned char l_id, unsigned char l_strength) : m_id(l_id), m_strength(l_strength), m_size(1), m_moved(0)
-	{
-	}
-
-	unsigned char GetId() const
-	{
-		return this->m_id;
-	}
-	
-	unsigned char GetStrength() const
-	{
-		return this->m_strength;
-	}
-
-	void SizeUp()
-	{
-		this->m_size += SPEED;
-	}
-
-	unsigned short GetSize() const
-	{
-		return this->m_size;
-	}
-
-	void MoveUp()
-	{
-		this->m_moved += SPEED;
-	}
-
-	unsigned short GetMove() const
-	{
-		return this->m_moved;
-	}
-private:
-	unsigned char m_id;
-	unsigned char m_strength;
-	unsigned short m_size;
-	unsigned short m_moved;
-};
-
-std::vector<Note> notes;
-
 void midiCallback(double deltatime, std::vector<unsigned char> *message, void *userData)
 {
 	if (message->at(0) == 144) {
 		key[message->at(1) - START_NOTE] = true;
-		notes.push_back(Note(message->at(1) - START_NOTE, float(message->at(2)) / 100 * 255));
+		notes.push_back(Note(message->at(1) - START_NOTE, float(message->at(2)) / 100 * 255, sf::Color(255 - float(message->at(1)) / NOTES_NB * 255, 0, float(message->at(1)) / NOTES_NB * 255, (STRENGHT_SENSIBILITY) ? float(message->at(2)) / 100 * 255 : 255)));
 	}
 	else if (message->at(0) == 128) {
 		key[message->at(1) - START_NOTE] = false;
@@ -240,7 +90,7 @@ void midiCallback(double deltatime, std::vector<unsigned char> *message, void *u
 
 int main()
 {
-	Keyboard keyboard(NOTES_NB);
+	Keyboard keyboard(NOTES_NB, 0);
 	sf::RenderWindow window(sf::VideoMode(keyboard.GetWindowWidth(), HEIGHT), "Midi Exposer");
 	sf::Event event;
 	sf::RectangleShape rectangle;
@@ -249,7 +99,7 @@ int main()
 	unsigned char key_display[NOTES_NB];
 
   if (nPorts != 0) {
-		std::cout << nPorts << " ports available!" << std::endl;
+		std::cout << "There is " << nPorts << " port(s) available!" << std::endl;
   	midi->openPort(nPorts - 1);
   	midi->setCallback(&midiCallback);
   	midi->ignoreTypes(false, false, false);
@@ -271,7 +121,7 @@ int main()
 							if (event.key.code == keyboard_key[i]) {
 								if (key[i] != true) {
 									key[i] = true;
-									notes.push_back(Note(i, 255));
+									notes.push_back(Note(i, 255, sf::Color(255 - float(i) / NOTES_NB * 255, 0, float(i) / NOTES_NB * 255)));
 								}
 							}
 						}
@@ -316,13 +166,13 @@ int main()
 			}
 			for (auto &note : notes) {
 				sf::IntRect rect = keyboard.GetKey(note.GetId()).GetRect();
-				
+
 				rectangle.setFillColor(sf::Color(0, 0, 0));
 				rectangle.setPosition(rect.left - NOTES_SEP, HEIGHT - NOTE_HEIGHT - note.GetMove() - note.GetSize() - NOTES_SEP);
 				rectangle.setSize(sf::Vector2f(rect.width + NOTES_SEP * 2, note.GetSize() + NOTES_SEP * 2));
 				window.draw(rectangle);
-				
-				rectangle.setFillColor(sf::Color(255 - float(note.GetId()) / NOTES_NB * 255, 0, float(note.GetId()) / NOTES_NB * 255, (STRENGHT_SENSIBILITY) ? note.GetStrength() : 255));
+
+				rectangle.setFillColor(note.GetColor());
 				rectangle.setPosition(rect.left, HEIGHT - NOTE_HEIGHT - note.GetMove() - note.GetSize());
 				rectangle.setSize(sf::Vector2f(rect.width, note.GetSize()));
 				if (note.GetMove())
