@@ -73,7 +73,7 @@ void midiCallback(double deltatime, std::vector<unsigned char> *message, void *u
 {
 	if (message->at(0) == 144) {
 		key[message->at(1) - START_NOTE] = true;
-		notes.push_back(Note(message->at(1) - START_NOTE, float(message->at(2)) / 100 * 255, sf::Color(255 - float(message->at(1)) / NOTES_NB * 255, 0, float(message->at(1)) / NOTES_NB * 255, (STRENGHT_SENSIBILITY) ? float(message->at(2)) / 100 * 255 : 255)));
+		notes.push_back(Note(message->at(1) - START_NOTE, float(message->at(2)) / 100 * 255, sf::Color(255 - float(message->at(1) - START_NOTE) / NOTES_NB * 255, 0, float(message->at(1) - START_NOTE) / NOTES_NB * 255, (STRENGHT_SENSIBILITY) ? float(message->at(2)) / 100 * 255 : 255)));
 	}
 	else if (message->at(0) == 128) {
 		key[message->at(1) - START_NOTE] = false;
