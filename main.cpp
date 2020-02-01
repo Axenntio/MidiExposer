@@ -82,9 +82,9 @@ void midiCallback(double deltatime, std::vector<unsigned char> *message, void *u
 		unsigned int nBytes = message->size();
 		std::cout << "Unknow action: ";
 		for (unsigned int i = 0; i < nBytes; i++)
-	    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-	  if (nBytes > 0)
-	    std::cout << "stamp = " << deltatime << std::endl;//*/
+		std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+		if (nBytes > 0)
+		std::cout << "stamp = " << deltatime << std::endl;//*/
 	}
 }
 
@@ -94,15 +94,15 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(keyboard.GetWindowWidth(), HEIGHT), "Midi Exposer");
 	sf::Event event;
 	sf::RectangleShape rectangle;
-  RtMidiIn *midi = new RtMidiIn();
-  unsigned int nPorts = midi->getPortCount();
+	RtMidiIn *midi = new RtMidiIn();
+	unsigned int nPorts = midi->getPortCount();
 	unsigned char key_display[NOTES_NB];
 
-  if (nPorts != 0) {
+	if (nPorts != 0) {
 		std::cout << "There is " << nPorts << " port(s) available!" << std::endl;
-  	midi->openPort(nPorts - 1);
-  	midi->setCallback(&midiCallback);
-  	midi->ignoreTypes(false, false, false);
+		midi->openPort(nPorts - 1);
+		midi->setCallback(&midiCallback);
+		midi->ignoreTypes(false, false, false);
 	}
 	else
 		std::cout << "No ports available!" << std::endl;
@@ -113,9 +113,9 @@ int main()
 	window.setVerticalSyncEnabled(true);
 	window.setFramerateLimit(60);
 	while (window.isOpen()) {
-      while (window.pollEvent(event)) {
-          if (event.type == sf::Event::Closed)
-              window.close();
+		while (window.pollEvent(event)) {
+			if (event.type == sf::Event::Closed)
+				window.close();
 					else if (event.type == sf::Event::KeyPressed) {
 						for (unsigned short i = 0; i < KEYBOARD_KEY; i ++) {
 							if (event.key.code == keyboard_key[i]) {
@@ -132,7 +132,7 @@ int main()
 								key[i] = false;
 						}
 					}
-      }
+		}
 			for (unsigned char i = 0; i < NOTES_NB; i++) {
 				if (key[i]) {
 					key_display[i] = 255;
@@ -179,8 +179,8 @@ int main()
 					note.MoveUp();
 				window.draw(rectangle);
 			}
-      window.display();
-  }
-  delete midi;
-  return 0;
+		window.display();
+	}
+	delete midi;
+	return 0;
 }
