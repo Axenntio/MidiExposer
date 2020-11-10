@@ -15,7 +15,7 @@ public:
 private:
 	unsigned char m_id;
 	unsigned char m_strength;
+	sf::Color m_color;
 	unsigned short m_size;
 	unsigned short m_moved;
-	sf::Color m_color;
 };
